@@ -1,0 +1,81 @@
+import pandas as pd
+import yfinance as yf
+
+# Class to manage the stock portfolio
+class StockPortfolio:
+    def __init__(self):
+        self.portfolio = pd.DataFrame(columns=["Ticker", "Shares", "Purchase Price"])
+
+    def add_stock(self, ticker, shares, purchase_price):
+        new_stock = pd.DataFrame({
+            "Ticker": [ticker],
+            "Shares": [shares],
+            "Purchase Price": [purchase_price]
+        })
+        self.portfolio = pd.concat([self.portfolio, new_stock], ignore_index=True)
+        print(f"Added {shares} shares of {ticker} at ${purchase_price} each.")
+
+    def remove_stock(self, ticker):
+        self.portfolio = self.portfolio[self.portfolio["Ticker"] != ticker]
+        print(f"Removed {ticker} from the portfolio.")
+
+    def view_portfolio(self):
+        if self.portfolio.empty:
+            print("Your portfolio is empty.")
+        else:
+            print("\nCurrent Portfolio:")
+            print(self.portfolio)
+
+    def fetch_stock_data(self, ticker):
+        stock = yf.Ticker(ticker)
+        return stock.history(period="1d")["Close"].iloc[-1]
+
+    def track_performance(self):
+        if self.portfolio.empty:
+            print("Your portfolio is empty.")
+            return
+
+        performance_data = []
+        for _, row in self.portfolio.iterrows():
+            ticker = row["Ticker"]
+            shares = row["Shares"]
+            purchase_price = row["Purchase Price"]
+
+            current_price = self.fetch_stock_data(ticker)
+            total_value = shares * current_price
+            profit_loss = (current_price - purchase_price) * shares
+
+            performance_data.append({
+                "Ticker": ticker,
+                "Shares": shares,
+                "Purchase Price": purchase_price,
+                "Current Price": current_price,
+                "Total Value": total_value,
+                "Profit/Loss": profit_loss
+            })
+
+        performance_df = pd.DataFrame(performance_data)
+        print("\nPortfolio Performance:")
+        print(performance_df)
+
+# Example usage of the StockPortfolio class
+portfolio = StockPortfolio()
+
+# Adding stocks to the portfolio
+portfolio.add_stock("AAPL", 10, 150.00)
+portfolio.add_stock("TSLA", 5, 650.00)
+
+# Viewing the portfolio
+portfolio.view_portfolio()
+
+# Tracking the performance of the portfolio
+portfolio.track_performance()
+
+# Removing a stock from the portfolio
+portfolio.remove_stock("AAPL")
+
+# Viewing the portfolio after removal
+portfolio.view_portfolio()
+
+# Tracking the performance again
+portfolio.track_performance()
